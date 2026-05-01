@@ -1,4 +1,4 @@
-*** Дипломный проект Фоминых К.С.
+### Дипломный проект Фоминых К.С.
 
-** Склонировано для опытов деплоя из https://github.com/dockersamples/example-voting-app
+## Склонировано для опытов деплоя из https://github.com/dockersamples/example-voting-app
 
