@@ -1,0 +1,51 @@
+---
+# 1. Глобалки сценария
+- name: Install K3s on the worker node
+  hosts: nodes              # Берет список серверов из hosts.ini
+  become: yes               # Всё от root (как sudo)
+
+  tasks:
+    # 2. Подготовка системы
+    - name: Update apt cache
+      apt:
+        update_cache: yes   # типа 'sudo apt update'
+
+    # 3. Доставка бинарника (наш обход блокировок)
+    - name: Copy k3s binary from Lenovo to Server
+      # Мы берем файл, который ты скачал через прокси на Lenovo,
+      # и перекидываем его по локальной сети на ноут.
+      copy:
+        src: ./k3s            # Файл должен лежать в папке ansible на Lenovo
+        dest: /usr/local/bin/k3s
+        mode: '0755'          # Делаем его исполняемым (бинарнику нужны права на запуск)
+
+    # 4. Основная установка
+    - name: Run K3s installer script
+      # INSTALL_K3S_SKIP_DOWNLOAD=true — самая важная часть. 
+      # Она говорит скрипту: "Бинарник уже на месте в /usr/local/bin, не пытайся качать его с GitHub".
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_SKIP_DOWNLOAD=true sh -
+      
+      # Параметр 'creates' делает сценарий "идемпотентным":
+      # Если файл службы k3s уже создан, Ansible поймет, что всё готово, и пропустит шаг.
+      args:
+        creates: /etc/systemd/system/k3s.service
+
+    # 5. Проверка жизнеспособности
+    - name: Wait for node to be ready
+      # Просим K3s показать статус нод
+      shell: k3s kubectl get nodes
+      register: nodes_output     # Сохраняем ответ команды в переменную
+      
+      # Цикл: повторяем команду, пока в выводе не появится слово "Ready"
+      until: '" Ready " in nodes_output.stdout'
+      retries: 10                # Пробуем 10 раз
+      delay: 5                   # Пауза в 5 секунд между попытками
+                                 # Это важно, так как K3s нужно время на запуск после установки
+
+    # 6. Настройка доступа для пользователя
+    - name: Change permissions of k3s config for gunner
+      # По умолчанию конфиг K3s (права доступа к кластеру) закрыт для всех, кроме root.
+      # Чтобы ты мог управлять кластером под своим юзером gunner, мы меняем права на чтение.
+      file:
+        path: /etc/rancher/k3s/k3s.yaml
+        mode: '0644'             # Разрешаем чтение всем (для учебного проекта это ок)
