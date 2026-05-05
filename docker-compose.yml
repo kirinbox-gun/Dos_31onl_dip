@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # 1. База данных (взял готовую)
+ db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - back-tier
+
+  # 2. Очередь сообщений (взял готовую)
+ redis:
+    image: redis:alpine
+    networks:
+      - back-tier
+
+  # 3. Мой сервис голосования
+ vote:
+    image: kirinbox/dos_31onl_dip_vote:v1
+    ports:
+      - "5000:80"
+    depends_on:
+      - redis
+    networks:
+      - front-tier
+      - back-tier
+
+  # 4. Мой обработчик данных
+ worker:
+    image: kirinbox/dos_31onl_dip_worker:v1
+    environment:
+      # Передаем строку подключения воркеру
+      - ConnectionString=Host=db;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB};Pooling=true;
+    depends_on:
+      - db
+      - redis
+    networks:
+      - back-tier
+
+  # 5. Мой сервис результатов
+ result:
+    image: kirinbox/dos_31onl_dip_result:v1
+    ports:
+      - "5001:4000"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    depends_on:
+      - db
+    networks:
+      - front-tier
+      - back-tier
+
+networks:
+  front-tier:
+  back-tier:

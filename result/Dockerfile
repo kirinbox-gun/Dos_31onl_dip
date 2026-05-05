@@ -1,25 +1,26 @@
-FROM node:18-slim
+# Этап 1: Сборка зависимостей
+FROM node:18-slim AS builder
 
-# add curl for healthcheck
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl tini && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-WORKDIR /usr/local/app
-
-# have nodemon available for local dev use (file watching)
-RUN npm install -g nodemon
-
+# Копируем файлы со списком библиотек
 COPY package*.json ./
 
-RUN npm ci && \
- npm cache clean --force && \
- mv /usr/local/app/node_modules /node_modules
+# Устанавливаем библиотеки (аналог pip install)
+RUN npm install
 
+# Этап 2: Финальный образ
+FROM node:18-slim
+
+WORKDIR /app
+
+# Копируем только папку с установленными библиотеками из первого этапа
+COPY --from=builder /app/node_modules ./node_modules
+
+# Копируем весь остальной код приложения
 COPY . .
 
-ENV PORT=80
 EXPOSE 80
 
-ENTRYPOINT ["/usr/bin/tini", "--"]
+# Запуск приложения через node (в папке result основной файл называется server.js)
 CMD ["node", "server.js"]

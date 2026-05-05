@@ -1,32 +1,27 @@
-# base defines a base stage that uses the official python runtime base image
-FROM python:3.11-slim AS base
+# Этап 1: Сборка зависимостей
+FROM python:3.11-slim AS builder
 
-# Add curl for healthcheck
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-# Set the application directory
-WORKDIR /usr/local/app
+# Копируем только список зависимостей, чтобы кэшировать этот слой
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
 
-# Install our requirements.txt
-COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Этап 2: Финальный образ
+FROM python:3.11-slim
 
-# dev defines a stage for development, where it'll watch for filesystem changes
-FROM base AS dev
-RUN pip install watchdog
-ENV FLASK_ENV=development
-CMD ["python", "app.py"]
+WORKDIR /app
 
-# final defines the stage that will bundle the application for production
-FROM base AS final
+# Копируем установленные пакеты из предыдущего этапа
+COPY --from=builder /root/.local /root/.local
+# Обновляем переменную PATH, чтобы Python видел установленные пакеты
+ENV PATH=/root/.local/bin:$PATH
 
-# Copy our code from the current folder to the working directory inside the container
+# Копируем исходный код приложения
 COPY . .
 
-# Make port 80 available for links and/or publish
+# Открываем порт 80 ( Flask в этом приложении настроен на него)
 EXPOSE 80
 
-# Define our command to be run when launching the container
-CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]
+# Команда для запуска
+CMD ["python", "app.py"]
