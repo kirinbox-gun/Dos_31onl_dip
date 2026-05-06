@@ -1,29 +1,27 @@
 ---
-# 1. Глобалки сценария
+# 1 глобалки сценария
 - name: Install K3s on the worker node
-  hosts: nodes              # Берет список серверов из hosts.ini
-  become: yes               # Всё от root (как sudo)
+  hosts: nodes              # берет список серверов из hosts.ini
+  become: yes               # всё от root (как sudo)
 
   tasks:
-    # 2. Подготовка системы
+    # 2 подготовка системы
     - name: Update apt cache
       apt:
         update_cache: yes   # типа 'sudo apt update'
 
-    # 3. Доставка бинарника (наш обход блокировок)
+    # 3 доставка бинарника
     - name: Copy k3s binary from Lenovo to Server
-      # Мы берем файл, который ты скачал через прокси на Lenovo,
-      # и перекидываем его по локальной сети на ноут.
-      copy:
-        src: ./k3s            # Файл должен лежать в папке ansible на Lenovo
-        dest: /usr/local/bin/k3s
-        mode: '0755'          # Делаем его исполняемым (бинарнику нужны права на запуск)
 
-    # 4. Основная установка
+      copy:
+        src: ./k3s
+        dest: /usr/local/bin/k3s
+        mode: '0755'
+
+    # 4 основная установка
     - name: Run K3s installer script
-      # INSTALL_K3S_SKIP_DOWNLOAD=true — самая важная часть. 
-      # Она говорит скрипту: "Бинарник уже на месте в /usr/local/bin, не пытайся качать его с GitHub".
-      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_SKIP_DOWNLOAD=true sh -
+
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_SKIP_DOWNLOAD=true INSTALL_K3S_EXEC="--tls-san {{ ansible_host }}" sh - # k3s уже есть лупи скрипт
       
       # Параметр 'creates' делает сценарий "идемпотентным":
       # Если файл службы k3s уже создан, Ansible поймет, что всё готово, и пропустит шаг.

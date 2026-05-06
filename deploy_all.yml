@@ -1,0 +1,34 @@
+---
+# Сначала запускаем установку K3s как отдельный сценарий
+- import_playbook: ansible/install_k3s.yml
+
+# А теперь основной сценарий для деплоя инфраструктуры
+- name: Infrastructure and App Deployment
+  hosts: nodes
+  become: yes
+  tasks:
+    - name: Fetch KUBECONFIG to Lenovo
+      fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: ./terraform/k3s.yaml
+        flat: yes
+
+    - name: Prepare KUBECONFIG for remote access
+      delegate_to: localhost
+      become: no
+      replace:
+        path: ./terraform/k3s.yaml
+        regexp: '127.0.0.1'
+        replace: "{{ ansible_host }}"
+
+    - name: Run Terraform Apply
+      delegate_to: localhost
+      become: no
+      environment:
+        # Указываем Terraform путь к конфигу
+        KUBECONFIG: "./k3s.yaml"
+        # Передаем только секреты для базы данных
+        TF_VAR_db_user: "{{ lookup('ini', 'POSTGRES_USER type=properties file=.env') }}"
+        TF_VAR_db_password: "{{ lookup('ini', 'POSTGRES_PASSWORD type=properties file=.env') }}"
+      shell: |
+        cd terraform && terraform init -upgrade && terraform apply -auto-approve

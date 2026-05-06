@@ -9,6 +9,9 @@ terraform {
 }
 
 # Блок подключения
+# provider "kubernetes" {
+#  config_path = "../.kube/config" #откуда конф брать
+# }
 provider "kubernetes" {
-  config_path = "../.kube/config" #откуда конф брать
+  config_path = "./k3s.yaml"
 }
