@@ -1,2 +1,5 @@
 .env
 /ansible/k3s
+.kube/
+terraform/.terraform/
+terraform/terraform.tfstate*
