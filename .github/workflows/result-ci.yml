@@ -29,13 +29,20 @@ jobs:
 
       - name: Deploy via Ansible
         run: |
-          # Декодируем ключ
+          # 1. Декодируем ключ
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ./deploy_key
           chmod 600 ./deploy_key
           
-          # Запускаем с явным указанием ключа для хоста
+          # 2. ДИАГНОСТИКА (посмотрим, что видит раннер)
+          echo "--- Содержимое инвентаря ---"
+          cat ansible/inventory.ini
+          echo "--- Конец инвентаря ---"
+          
+          # 3. Запуск с принудительным указанием хостов через запятую, 
+          # чтобы точно не промахнуться, пока чиним инвентарь
           ansible-playbook -i ansible/inventory.ini deploy_all.yml \
             -e "ansible_ssh_private_key_file=./deploy_key" \
-            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
+            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes" \
+            --limit all
           
           rm ./deploy_key
