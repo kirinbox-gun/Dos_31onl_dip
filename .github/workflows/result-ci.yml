@@ -28,7 +28,6 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/dos_31onl_dip_result:latest
 
       - name: Deploy via Ansible
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: 'False'
-        run: |
-          ansible-playbook -i ansible/inventory.ini deploy_all.yml
+        run: ansible-playbook -i ansible/inventory.ini deploy_all.yml \
+            --private-key /home/runner/.ssh/id_rsa \
+            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
