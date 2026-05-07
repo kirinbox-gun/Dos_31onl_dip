@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: worker
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,3 +26,9 @@ jobs:
           context: ./vote
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/dos_31onl_dip_worker:latest
+
+      - name: Deploy via Ansible
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+        run: |
+          ansible-playbook -i ansible/inventory.ini deploy_all.yml
