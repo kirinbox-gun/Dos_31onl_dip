@@ -33,13 +33,14 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ./deploy_key
           chmod 600 ./deploy_key
           
-          # 2. Ищем, где лежит инвентарь (на всякий случай)
-          echo "Ищем файлы inventory..."
-          find . -name "inventory.ini"
+          # 2. Проверка: не пустой ли ключ после декодирования?
+          echo "Размер ключа в байтах:"
+          wc -c ./deploy_key
           
-          # 3. Запуск (пробуем обратиться к файлу напрямую в корне или по пути)
+          # 3. Запуск с МАКСИМАЛЬНОЙ детализацией
           ansible-playbook -i ansible/inventory.ini deploy_all.yml \
             -e "ansible_ssh_private_key_file=./deploy_key" \
-            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
+            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes" \
+            -vvv
           
           rm ./deploy_key
