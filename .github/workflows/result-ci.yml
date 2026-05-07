@@ -3,13 +3,13 @@ name: Build Result
 on:
   push:
     branches: [ "main" ]
-    # ВОТ ОНО: запускать только если изменения в папке result
+    # запускать только если изменения в папке result
     paths:
       - 'result/**'
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: worker
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,6 +23,6 @@ jobs:
       - name: Build and push result
         uses: docker/build-push-action@v5
         with:
-          context: ./vote
+          context: ./result
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/dos_31onl_dip_result:latest
