@@ -29,12 +29,13 @@ jobs:
 
       - name: Deploy via Ansible
         run: |
-          # Используем двойные кавычки, чтобы сохранить структуру строки
+          # Декодируем ключ
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ./deploy_key
           chmod 600 ./deploy_key
           
+          # Запускаем с явным указанием ключа для хоста
           ansible-playbook -i ansible/inventory.ini deploy_all.yml \
-            --private-key ./deploy_key \
-            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+            -e "ansible_ssh_private_key_file=./deploy_key" \
+            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
           
           rm ./deploy_key
