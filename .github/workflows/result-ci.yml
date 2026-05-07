@@ -29,16 +29,9 @@ jobs:
 
       - name: Deploy via Ansible
         run: |
-          # 1. Создаем папку .ssh в домашней директории раннера (не в RO томе)
-          mkdir -p ~/.ssh
-          
-          # 2. Пишем ключ из секретов в файл
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          
-          # 3. Выставляем права (теперь это наш файл, прав хватит)
-          chmod 600 ~/.ssh/deploy_key
-          
-          # 4. Запускаем плейбук
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./deploy_key
+          chmod 600 ./deploy_key
           ansible-playbook -i ansible/inventory.ini deploy_all.yml \
-            --private-key ~/.ssh/deploy_key \
+            --private-key ./deploy_key \
             --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          rm ./deploy_key
