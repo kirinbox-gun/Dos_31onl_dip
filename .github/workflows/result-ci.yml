@@ -28,6 +28,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/dos_31onl_dip_result:latest
 
       - name: Deploy via Ansible
-        run: ansible-playbook -i ansible/inventory.ini deploy_all.yml \
+        run: chmod 600 /home/runner/.ssh/id_rsa \
+            ansible-playbook -i ansible/inventory.ini deploy_all.yml \
             --private-key /home/runner/.ssh/id_rsa \
             --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
