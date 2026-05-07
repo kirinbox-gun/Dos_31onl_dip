@@ -28,19 +28,20 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/dos_31onl_dip_result:latest
 
       - name: Deploy via Ansible
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          # 1. Декодируем ключ
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ./deploy_key
+          # 1. Декодируем ключ максимально чистым способом
+          echo "$SSH_KEY" | base64 -d > ./deploy_key
           chmod 600 ./deploy_key
           
-          # 2. Проверка: не пустой ли ключ после декодирования?
-          echo "Размер ключа в байтах:"
-          wc -c ./deploy_key
+          # 2. Добавляем ПРИНУДИТЕЛЬНУЮ пустую строку в конец (SSH это любит)
+          sed -i '$a\' ./deploy_key
           
-          # 3. Запуск с МАКСИМАЛЬНОЙ детализацией
+          # 3. Запуск Ansible с небольшим изменением в кавычках пользователя
           ansible-playbook -i ansible/inventory.ini deploy_all.yml \
             -e "ansible_ssh_private_key_file=./deploy_key" \
-            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes" \
-            -vvv
+            -e "ansible_user=gunner" \
+            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
           
           rm ./deploy_key
