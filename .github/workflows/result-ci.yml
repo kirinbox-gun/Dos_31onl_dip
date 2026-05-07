@@ -29,9 +29,16 @@ jobs:
 
       - name: Deploy via Ansible
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./deploy_key
+          # Используем printf, чтобы точно сохранить все переносы строк ключа
+          printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ./deploy_key
+          
+          # Права доступа
           chmod 600 ./deploy_key
+          
+          # Запуск
           ansible-playbook -i ansible/inventory.ini deploy_all.yml \
             --private-key ./deploy_key \
             --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          
+          # Удаление
           rm ./deploy_key
