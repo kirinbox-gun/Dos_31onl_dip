@@ -11,23 +11,26 @@
         update_cache: yes   # типа 'sudo apt update'
 
     # 3 доставка бинарника
-    - name: Copy k3s binary from Lenovo to Server
+    #- name: Copy k3s binary from Lenovo to Server
 
-      copy:
-        src: ./k3s
-        dest: /usr/local/bin/k3s
-        mode: '0755'
+     # copy:
+      #  src: ./k3s
+       # dest: /usr/local/bin/k3s
+        #mode: '0755'
 
     # 4 основная установка
-    - name: Run K3s installer script
+   # - name: Run K3s installer script
 
-      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_SKIP_DOWNLOAD=true INSTALL_K3S_EXEC="--tls-san {{ ansible_host }}" sh - # k3s уже есть лупи скрипт
+    #  shell: curl -sfL https://get.k3s.io | INSTALL_K3S_SKIP_DOWNLOAD=true INSTALL_K3S_EXEC="--tls-san {{ ansible_host }}" sh - # k3s уже есть лупи скрипт
       
       # Параметр 'creates' делает сценарий "идемпотентным":
       # Если файл службы k3s уже создан, Ansible поймет, что всё готово, и пропустит шаг.
+     # args:
+      #  creates: /etc/systemd/system/k3s.service
+    - name: Install k3s via script
+      shell: curl -sfL https://get.k3s.io | sh -
       args:
-        creates: /etc/systemd/system/k3s.service
-
+        creates: /usr/local/bin/k3s
     # 5. Проверка жизнеспособности
     - name: Wait for node to be ready
       # Просим K3s показать статус нод
