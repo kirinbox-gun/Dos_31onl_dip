@@ -20,14 +20,15 @@
         path: ./terraform/k3s.yaml
         regexp: '127.0.0.1'
         replace: "{{ ansible_host }}"
-    
-    - name: Clean up existing namespace
+
+    - name: Purge old infrastructure (Full Reset)
       delegate_to: localhost
       become: no
       shell: |
         export KUBECONFIG="./terraform/k3s.yaml"
-        kubectl delete namespace dos31dip --ignore-not-found=true
-      # Добавляем игнорирование ошибок, если kubectl еще не настроен
+        
+        kubectl delete namespace dos31dip --ignore-not-found=true --wait=true --timeout=120s
+      # Даем этой задаче право на выполнение, даже если kubectl не настроен идеально
       failed_when: false
 
     - name: Run Terraform Apply
@@ -37,7 +38,6 @@
         KUBECONFIG: "./terraform/k3s.yaml"
         TF_VAR_db_user: "{{ lookup('env', 'DB_USER') }}"
         TF_VAR_db_password: "{{ lookup('env', 'DB_PASS') }}"
-        # Используем абсолютный путь через переменную Ansible
         TF_CLI_CONFIG_FILE: "{{ playbook_dir }}/terraform/.terraformrc"
       shell: |
         cd terraform
