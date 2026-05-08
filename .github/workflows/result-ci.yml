@@ -30,13 +30,11 @@ jobs:
       - name: Deploy via Ansible
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DB_USER: ${{ secrets.POSTGRES_USER }}
+          DB_PASS: ${{ secrets.POSTGRES_PASSWORD }}
         run: |
-          # 1. Декодируем и создаем файл ключа
-          echo "$SSH_KEY" | base64 -d > ./deploy_key
-          chmod 600 ./deploy_key
-          
-          # 2. Запуск с расширенными параметрами SSH
+          # ... тут твой код декодирования ключа ...
           ansible-playbook -i ansible/inventory.ini deploy_all.yml \
             -e "ansible_ssh_private_key_file=./deploy_key" \
-            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o PubkeyAcceptedAlgorithms=+ssh-ed25519" \
+            --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
             -vv
