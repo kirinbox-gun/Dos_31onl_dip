@@ -28,12 +28,10 @@
         KUBECONFIG: "./terraform/k3s.yaml"
         TF_VAR_db_user: "{{ lookup('env', 'DB_USER') }}"
         TF_VAR_db_password: "{{ lookup('env', 'DB_PASS') }}"
-        # Указываем Terraform использовать наш конфиг зеркала
-        TF_CLI_CONFIG_FILE: "$GITHUB_WORKSPACE/terraform/.terraformrc"
+        # Используем абсолютный путь через переменную Ansible
+        TF_CLI_CONFIG_FILE: "{{ playbook_dir }}/terraform/.terraformrc"
       shell: |
         cd terraform
-        # Полная очистка перед стартом
         rm -rf .terraform .terraform.lock.hcl
-        # Инициализация через зеркало
         terraform init -input=false
         terraform apply -auto-approve
