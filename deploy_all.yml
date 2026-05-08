@@ -25,10 +25,14 @@
       delegate_to: localhost
       become: no
       environment:
-        # Указываем Terraform путь к конфигу
         KUBECONFIG: "./terraform/k3s.yaml"
-        # Передаем только секреты для базы данных
         TF_VAR_db_user: "{{ lookup('env', 'DB_USER') }}"
         TF_VAR_db_password: "{{ lookup('env', 'DB_PASS') }}"
       shell: |
-        cd terraform && terraform init -upgrade && terraform apply -auto-approve
+        cd terraform
+        # Проверка DNS
+        host registry.terraform.io || echo "DNS FAIL"
+        # Очистка старых локов и принудительная переинициализация
+        rm -rf .terraform .terraform.lock.hcl
+        terraform init -input=false
+        terraform apply -auto-approve
