@@ -20,6 +20,15 @@
         path: ./terraform/k3s.yaml
         regexp: '127.0.0.1'
         replace: "{{ ansible_host }}"
+    
+    - name: Clean up existing namespace
+      delegate_to: localhost
+      become: no
+      shell: |
+        export KUBECONFIG="./terraform/k3s.yaml"
+        kubectl delete namespace dos31dip --ignore-not-found=true
+      # Добавляем игнорирование ошибок, если kubectl еще не настроен
+      failed_when: false
 
     - name: Run Terraform Apply
       delegate_to: localhost
